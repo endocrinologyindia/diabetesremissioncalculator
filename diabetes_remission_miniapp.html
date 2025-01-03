@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mohan-Taylor-Lakhani tool for Diabetes Remission Eligibility</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .form-section h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.2em;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: inline-block;
+            margin-right: 20px;
+            vertical-align: top;
+            width: calc(50% - 20px);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 200px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1em;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        .step {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .details {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mohan-Taylor-Lakhani tool for Diabetes Remission Eligibility version 1.0</h1>
+        <h2>Developed by Dr. Om J Lakhani</h2>
+        
+        <div class="form-section">
+            <h2>Basic Information</h2>
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" required>
+            </div>
+            <div class="form-group">
+                <label for="hba1c">HbA1c (%):</label>
+                <input type="number" id="hba1c" step="0.1" required>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Anthropometric Measurements</h2>
+            <div class="form-group">
+                <label for="weight">Weight (kg):</label>
+                <input type="number" id="weight" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="height">Height (cm):</label>
+                <input type="number" id="height" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="waist">Waist Circumference (cm):</label>
+                <input type="number" id="waist" step="0.1" required>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Lipid Profile</h2>
+            <div class="form-group">
+                <label for="triglycerides">Triglycerides (mg/dL):</label>
+                <input type="number" id="triglycerides" required>
+            </div>
+            <div class="form-group">
+                <label for="hdl">HDL Cholesterol (mg/dL):</label>
+                <input type="number" id="hdl" required>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>C-Peptide Values</h2>
+            <div class="form-group">
+                <label for="cPepFasting">Fasting C-peptide (ng/ml):</label>
+                <input type="number" id="cPepFasting" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="cPepStim">Stimulated C-peptide (ng/ml):</label>
+                <input type="number" id="cPepStim" step="0.01" required>
+            </div>
+        </div>
+        
+        <button onclick="checkEligibility()">Check Eligibility</button>
+        
+        <div id="stepResults"></div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Cluster means - [age, BMI, waist, HbA1c, triglycerides, HDL, C-pep fasting, C-pep stim]
+        const clusters_mean = [
+            [42.5, 24.9, 90, 10.7, 149, 40, 0.8, 1.7],
+            [46.5, 32.6, 108, 8.3, 155, 38, 1.5, 3.3],
+            [42.1, 26.5, 94.9, 9.1, 351, 36, 1.2, 2.6],
+            [50.2, 25.9, 92.4, 7.2, 136, 42, 1.1, 3]
+        ];
+
+        // Cluster standard deviations
+        const clusters_sd = [
+            [10.8, 3.5, 8.8, 2.1, 59, 9, 0.3, 0.6],
+            [10.4, 4.1, 8.9, 1.8, 59, 8, 0.4, 0.8],
+            [9.8, 3.1, 8.1, 1.9, 102, 8, 0.4, 0.8],
+            [10.3, 2.9, 7.4, 1.2, 50, 9, 0.3, 0.7]
+        ];
+
+        function calculateBMI(weight, height) {
+            const heightInMeters = height / 100;
+            return weight / (heightInMeters * heightInMeters);
+        }
+
+        function mixedMealScore(fasting, stimulated) {
+            const ff = parseFloat(fasting);
+            const pp = parseFloat(stimulated);
+            
+            let fs = 0;
+            if (ff < 0.24) fs = 5;
+            else if (ff >= 0.24 && ff < 0.6) fs = 3;
+            else if (ff >= 0.6 && ff < 1.0) fs = 1;
+            else if (ff >= 1.0) fs = 0;
+            
+            let ps = 0;
+            if (pp < 0.6) ps = 5;
+            else if (pp >= 0.6 && pp < 1.5) ps = 3;
+            else if (pp >= 1.5 && pp < 1.8) ps = 2;
+            else if (pp >= 1.8 && pp < 3.3) ps = 1;
+            else if (pp >= 3.3) ps = 0;
+            
+            return fs + ps;
+        }
+
+        function findBestCluster(age, bmi, waist, hba1c, triglyceride, hdl, cpepfasting, cpeptstim) {
+            // Convert C-peptide from ng/ml to pmol/L
+            const cpepfastingPmol = cpepfasting / 3.31;
+            const cpeptstimPmol = cpeptstim / 3.31;
+            
+            const patientData = [age, bmi, waist, hba1c, triglyceride, hdl, cpepfastingPmol, cpeptstimPmol];
+            
+            // Calculate means for standardization
+            const means = patientData.map((_, i) => 
+                clusters_mean.reduce((sum, cluster) => sum + cluster[i], 0) / clusters_mean.length
+            );
+            
+            // Calculate standard deviations for standardization
+            const sds = patientData.map((_, i) => 
+                clusters_sd.reduce((sum, cluster) => sum + cluster[i], 0) / clusters_sd.length
+            );
+            
+            // Z-score standardization for patient data
+            const standardizedPatientData = patientData.map((value, i) => 
+                (value - means[i]) / sds[i]
+            );
+            
+            // Calculate standardized cluster means
+            const standardizedClusterMeans = clusters_mean.map(cluster => 
+                cluster.map((value, i) => (value - means[i]) / sds[i])
+            );
+            
+            // Calculate Euclidean distances to each cluster
+            const distances = standardizedClusterMeans.map(cluster => {
+                return Math.sqrt(
+                    standardizedPatientData.reduce((sum, value, i) => 
+                        sum + Math.pow(value - cluster[i], 2), 0
+                    )
+                );
+            });
+            
+            return distances.indexOf(Math.min(...distances)) + 1;
+        }
+
+        function isRemissionPossible(age, hba1c, cluster) {
+            let ageScore = 0;
+            if (age >= 40 && age < 50) ageScore = 1;
+            else if (age >= 50 && age < 60) ageScore = 2;
+            else if (age >= 60) ageScore = 3;
+            
+            let hba1cScore = 0;
+            if (hba1c >= 6.5 && hba1c < 7.0) hba1cScore = 2;
+            else if (hba1c >= 7.0 && hba1c < 9.0) hba1cScore = 4;
+            else if (hba1c >= 9.0) hba1cScore = 6;
+            
+            const totalScore = ageScore + hba1cScore;
+            return (cluster === 2 || cluster === 4) && totalScore < 8;
+        }
+
+        function addStepResult(message, isSuccess = true, details = '') {
+            const stepResults = document.getElementById('stepResults');
+            const step = document.createElement('div');
+            step.className = 'step';
+            step.style.borderLeft = isSuccess ? '4px solid #4CAF50' : '4px solid #f44336';
+            step.innerHTML = message;
+            if (details) {
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'details';
+                detailsDiv.innerHTML = details;
+                step.appendChild(detailsDiv);
+            }
+            stepResults.appendChild(step);
+        }
+
+        function checkEligibility() {
+            const age = parseFloat(document.getElementById('age').value);
+            const hba1c = parseFloat(document.getElementById('hba1c').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const waist = parseFloat(document.getElementById('waist').value);
+            const triglycerides = parseFloat(document.getElementById('triglycerides').value);
+            const hdl = parseFloat(document.getElementById('hdl').value);
+            const cPepFasting = parseFloat(document.getElementById('cPepFasting').value);
+            const cPepStim = parseFloat(document.getElementById('cPepStim').value);
+            
+            const resultDiv = document.getElementById('result');
+            const stepResults = document.getElementById('stepResults');
+            stepResults.innerHTML = '';
+            
+            if (!age || !hba1c || !weight || !height || !waist || !triglycerides || 
+                !hdl || !cPepFasting || !cPepStim) {
+                resultDiv.innerHTML = "Please fill in all fields";
+                resultDiv.className = "error";
+                return;
+            }
+
+            const bmi = calculateBMI(weight, height);
+            addStepResult(`Calculated BMI: ${bmi.toFixed(1)} kg/m²`);
+
+            // Step 1: Mixed Meal Score
+            const mealScore = mixedMealScore(cPepFasting, cPepStim);
+            addStepResult(`Step 1: Mixed Meal Score = ${mealScore}`, true, 
+                `Fasting C-peptide: ${cPepFasting} ng/ml, Stimulated C-peptide: ${cPepStim} ng/ml`);
+
+            // Step 2: Type 1 Check
+            if (mealScore >= 5) {
+                addStepResult('Step 2: Mixed Meal Score suggests Type 1 diabetes', false);
+                resultDiv.innerHTML = "NOT a candidate for remission - Mixed Meal Score suggests Type 1 diabetes";
+                resultDiv.className = "error";
+                return;
+            }
+            addStepResult('Step 2: Type 1 diabetes ruled out');
+
+            // Step 3: Cluster Analysis
+            const cluster = findBestCluster(age, bmi, waist, hba1c, triglycerides, hdl, cPepFasting, cPepStim);
+            const clusterDetails = {
+                1: "SIDD (Severe Insulin Deficient Diabetes)",
+                2: "IROD (Insulin Resistant Obese Diabetes)",
+                3: "CIRDD (Combined Insulin Resistant and Deficient Diabetes)",
+                4: "MARD (Mild Age-Related Diabetes)"
+            };
+            
+            addStepResult(
+                `Step 3: Patient belongs to Cluster ${cluster} - ${clusterDetails[cluster]}`,
+                true,
+                `Based on comprehensive analysis of age, BMI, waist circumference, HbA1c, lipids, and C-peptide values`
+            );
+
+            // Step 4: Remission Check
+            const remissionPossible = isRemissionPossible(age, hba1c, cluster);
+            
+            if (remissionPossible) {
+                addStepResult('Step 4: Remission criteria met', true,
+                    'Patient meets age, HbA1c, and cluster criteria for remission possibility');
+                resultDiv.innerHTML = "Patient IS a candidate for remission";
+                resultDiv.className = "success";
+            } else {
+                addStepResult('Step 4: Remission criteria not met', false,
+                    'Patient does not meet one or more criteria (age, HbA1c, or cluster type) for remission');
+                resultDiv.innerHTML = "Patient is NOT a candidate for remission";
+                resultDiv.className = "error";
+            }
+        }
+    </script>
+</body>
+</html>
