@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Lakhani"
+    given-names: "Om J"
+    orcid: "0000-0001-6954-3722"
+title: "Mohan-Taylor-Lakhani tool for Diabetes Remission Eligibility"
+version: 1.0.0
+doi: 10.1007/s13410-024-01368-8
+date-released: 2025-01-07
+url: "https://github.com/endocrinologyindia/diabetesremissioncalculator"
